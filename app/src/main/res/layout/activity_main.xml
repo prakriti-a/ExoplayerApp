@@ -7,6 +7,19 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <!--to download song-->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/myFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/download"
+        android:backgroundTint="@color/teal_700"
+        app:tint="@color/white"
+        android:layout_margin="@dimen/margin"
+        android:contentDescription="@string/download_button"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"/>
+
     <!-- using custom controller -->
     <com.google.android.exoplayer2.ui.PlayerView
         android:id="@+id/myPlayerView"

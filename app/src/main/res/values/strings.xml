@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Exoplayer App</string>
+    <string name="download_button">Click here to download current song to your device</string>
+    <string name="null_error">No file found for download</string>
 </resources>

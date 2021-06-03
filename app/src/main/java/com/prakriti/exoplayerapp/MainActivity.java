@@ -2,22 +2,36 @@ package com.prakriti.exoplayerapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 // create exoplayer for playing media
 // create playlist of song files
 // create listener for exoplayer
 // work with exoplayer UI
+// external library for user permission to download audio to storage -> physical device
 
     private SimpleExoPlayer simpleExoPlayer;
 
@@ -35,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         // create media item with url of media/song file
 //        String songUrl = "https://opengameart.org/sites/default/files/Rise%20of%20spirit.mp3";
         // create playlist using array of urls
-        String songUrlList[] = new String[] {
+        String[] songUrlList = new String[] {
                 "https://opengameart.org/sites/default/files/Rise%20of%20spirit.mp3",
                 "https://opengameart.org/sites/default/files/Cyberpunk%20Moonlight%20Sonata_0.mp3",
                 "https://opengameart.org/sites/default/files/Path%20to%20Lake%20Land.ogg",
@@ -54,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         simpleExoPlayer.play();
 
         // initialise listener after calling play()
-        Player.EventListener eventListener = new Player.EventListener() {
+        Player.Listener listener = new Player.Listener() { // EventListener is deprecated
             @Override
             public void onPlaybackStateChanged(int state) {
                 if(state == Player.STATE_BUFFERING) {
@@ -66,7 +80,50 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-        simpleExoPlayer.addListener(eventListener);
+        simpleExoPlayer.addListener(listener);
+
+        // init fab for download music
+        FloatingActionButton myFab = findViewById(R.id.myFab);
+        myFab.setOnClickListener(v -> setupPermissions());
+    }
+
+    private void setupPermissions() {
+        Dexter.withContext(this)
+                .withPermissions(
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ).withListener(new MultiplePermissionsListener() {
+            @Override public void onPermissionsChecked(MultiplePermissionsReport report) {
+                // if given, download current music file
+                if(report.areAllPermissionsGranted()) {
+                    try {
+                        downloadCurrentMusicFile(simpleExoPlayer.getCurrentMediaItem().playbackProperties.uri.toString());
+                    }
+                    catch (NullPointerException n) {
+                        Toast.makeText(MainActivity.this, R.string.null_error, Toast.LENGTH_SHORT).show();
+                        n.printStackTrace();
+                    }
+                }
+            }
+            @Override
+            public void onPermissionRationaleShouldBeShown(List<PermissionRequest> list, PermissionToken permissionToken) {
+                permissionToken.continuePermissionRequest(); // will continue asking user for permission
+            }})
+                .check();
+    }
+
+    private void downloadCurrentMusicFile(String musicUrl) {
+        DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE); // dl form internet or server
+        Uri uri = Uri.parse(musicUrl);
+        DownloadManager.Request request = new DownloadManager.Request(uri);
+
+        String musicName = musicUrl.substring(musicUrl.lastIndexOf("/") + 1).replace("%20", " "); // last '/' onwards till end
+        request.setTitle(musicName);
+        request.setVisibleInDownloadsUi(true);
+        request.allowScanningByMediaScanner();
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, uri.getLastPathSegment()); // store dl here
+        downloadManager.enqueue(request); // start downloading when ready
     }
 
     @Override
