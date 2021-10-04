@@ -8,6 +8,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -33,22 +34,33 @@ public class MainActivity extends AppCompatActivity {
 // work with exoplayer UI
 // external library for user permission to download audio to storage -> physical device
 
+    private static final String TAG = "MainActivity";
     private SimpleExoPlayer simpleExoPlayer;
+    private PlayerView myPlayerView;
+    private ProgressBar myProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate called");
         setContentView(R.layout.activity_main);
 
-        ProgressBar myProgressBar = findViewById(R.id.myProgressBar);
-
-        // initialise
-        PlayerView myPlayerView = findViewById(R.id.myPlayerView);
+        myProgressBar = findViewById(R.id.myProgressBar);
+        myPlayerView = findViewById(R.id.myPlayerView);
         simpleExoPlayer = new SimpleExoPlayer.Builder(this).build();
 
+        // init fab for download music
+        FloatingActionButton myFab = findViewById(R.id.myFab);
+        myFab.setOnClickListener(v -> setupPermissions());
+
+        initializePlayer();
+    }
+
+    private void initializePlayer() {
         // create media item with url of media/song file
 //        String songUrl = "https://opengameart.org/sites/default/files/Rise%20of%20spirit.mp3";
         // create playlist using array of urls
+
         String[] songUrlList = new String[] {
                 "https://opengameart.org/sites/default/files/Rise%20of%20spirit.mp3",
                 "https://opengameart.org/sites/default/files/Cyberpunk%20Moonlight%20Sonata_0.mp3",
@@ -71,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
         Player.Listener listener = new Player.Listener() { // EventListener is deprecated
             @Override
             public void onPlaybackStateChanged(int state) {
+                Log.i(TAG, "onPlaybackStateChanged called");
                 if(state == Player.STATE_BUFFERING) {
                     // when song is loading
                     myProgressBar.setVisibility(View.VISIBLE);
@@ -78,13 +91,18 @@ public class MainActivity extends AppCompatActivity {
                 else if(state == Player.STATE_READY) {
                     myProgressBar.setVisibility(View.GONE);
                 }
+                //else if(state == Player.EVENT_PLAYBACK_STATE_CHANGED)
             }
         };
         simpleExoPlayer.addListener(listener);
+    }
 
-        // init fab for download music
-        FloatingActionButton myFab = findViewById(R.id.myFab);
-        myFab.setOnClickListener(v -> setupPermissions());
+    private void releasePlayer() {
+        // release player memory
+        if(simpleExoPlayer != null) {
+            simpleExoPlayer.release();
+            simpleExoPlayer = null;
+        }
     }
 
     private void setupPermissions() {
@@ -113,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void downloadCurrentMusicFile(String musicUrl) {
+        Log.i(TAG, "downloadCurrentMusicFile called");
         DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE); // dl form internet or server
         Uri uri = Uri.parse(musicUrl);
         DownloadManager.Request request = new DownloadManager.Request(uri);
@@ -127,12 +146,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        Log.i(TAG, "onStart called");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(TAG, "onPause called");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i(TAG, "onResume called");
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-        // release player memory
-        if(simpleExoPlayer != null) {
-            simpleExoPlayer.release();
-            simpleExoPlayer = null;
-        }
+        Log.i(TAG, "onDestroy called");
+        releasePlayer();
     }
+
+
 }

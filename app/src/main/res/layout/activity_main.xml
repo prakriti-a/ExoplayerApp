@@ -25,10 +25,10 @@
         android:id="@+id/myPlayerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:use_controller="true"
         app:controller_layout_id="@layout/custom_controller"
         app:fastforward_increment="10000"
-        app:rewind_increment="10000"/>
+        app:rewind_increment="10000"
+        app:use_controller="true" />
     <!-- 10 sec in ms -->
 
     <ProgressBar
