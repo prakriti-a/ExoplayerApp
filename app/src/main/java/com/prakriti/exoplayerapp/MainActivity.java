@@ -1,7 +1,5 @@
 package com.prakriti.exoplayerapp;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.Manifest;
 import android.app.DownloadManager;
 import android.content.Context;
@@ -13,10 +11,11 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.karumi.dexter.Dexter;
@@ -61,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
 //        String songUrl = "https://opengameart.org/sites/default/files/Rise%20of%20spirit.mp3";
         // create playlist using array of urls
 
-        String[] songUrlList = new String[] {
+        String[] songUrlList = new String[]{
                 "https://opengameart.org/sites/default/files/Rise%20of%20spirit.mp3",
                 "https://opengameart.org/sites/default/files/Cyberpunk%20Moonlight%20Sonata_0.mp3",
                 "https://opengameart.org/sites/default/files/Path%20to%20Lake%20Land.ogg",
@@ -71,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         };
         myPlayerView.setPlayer(simpleExoPlayer);
 
-        for(String url : songUrlList) { // add list or urls
+        for (String url : songUrlList) { // add list or urls
             MediaItem mediaItem = MediaItem.fromUri(Uri.parse(url)); // returns uri
             simpleExoPlayer.addMediaItem(mediaItem); // add one by one to player
         }
@@ -84,11 +83,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPlaybackStateChanged(int state) {
                 Log.i(TAG, "onPlaybackStateChanged called");
-                if(state == Player.STATE_BUFFERING) {
+                if (state == Player.STATE_BUFFERING) {
                     // when song is loading
                     myProgressBar.setVisibility(View.VISIBLE);
-                }
-                else if(state == Player.STATE_READY) {
+                } else if (state == Player.STATE_READY) {
                     myProgressBar.setVisibility(View.GONE);
                 }
                 //else if(state == Player.EVENT_PLAYBACK_STATE_CHANGED)
@@ -99,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void releasePlayer() {
         // release player memory
-        if(simpleExoPlayer != null) {
+        if (simpleExoPlayer != null) {
             simpleExoPlayer.release();
             simpleExoPlayer = null;
         }
@@ -111,22 +109,26 @@ public class MainActivity extends AppCompatActivity {
                         Manifest.permission.READ_EXTERNAL_STORAGE,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE
                 ).withListener(new MultiplePermissionsListener() {
-            @Override public void onPermissionsChecked(MultiplePermissionsReport report) {
+            @Override
+            public void onPermissionsChecked(MultiplePermissionsReport report) {
                 // if given, download current music file
-                if(report.areAllPermissionsGranted()) {
+                if (report.areAllPermissionsGranted()) {
                     try {
-                        downloadCurrentMusicFile(simpleExoPlayer.getCurrentMediaItem().playbackProperties.uri.toString());
-                    }
-                    catch (NullPointerException n) {
+                        if(simpleExoPlayer != null) { // insert null check for timeline
+                            downloadCurrentMusicFile(simpleExoPlayer.getCurrentMediaItem().playbackProperties.uri.toString());
+                        }
+                    } catch (NullPointerException n) {
                         Toast.makeText(MainActivity.this, R.string.null_error, Toast.LENGTH_SHORT).show();
                         n.printStackTrace();
                     }
                 }
             }
+
             @Override
             public void onPermissionRationaleShouldBeShown(List<PermissionRequest> list, PermissionToken permissionToken) {
                 permissionToken.continuePermissionRequest(); // will continue asking user for permission
-            }})
+            }
+        })
                 .check();
     }
 
@@ -169,6 +171,5 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "onDestroy called");
         releasePlayer();
     }
-
 
 }
